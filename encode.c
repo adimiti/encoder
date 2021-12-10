@@ -59,9 +59,9 @@ void encode(char *dest, const char *src, int src_len)
 	}
 	if (dv.rem)
 	{
-		x.b[2] = src[0+i*3] * (dv.rem > 0);
-		x.b[1] = src[1+i*3] * (dv.rem > 1);
-		x.b[0] = src[2+i*3] * (0);
+		x.b[2] = (dv.rem > 0)?src[0+i*3]:0;
+		x.b[1] = (dv.rem > 1)?src[1+i*3]:0;
+		x.b[0] = (0         )?src[2+i*3]:0;
 		into64(x.w, &dest[i*4],dv.rem);
 	}
 }
