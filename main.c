@@ -35,7 +35,7 @@ int test(const char a[3], const char b[4], int n)
 }
 
 int fd_out;
-int cb(char c[4] , bool done)
+int fileio_cb(char c[4] , bool done)
 {
 	if (c)
 	{
@@ -50,7 +50,6 @@ int compare_files(int fda, const char *ref)
 	int na;
 	char buffa[64];
 
-	lseek(fda, 0, SEEK_SET);
 	do {
 		na = read(fda, buffa, sizeof(buffa));
 		if (na) printf("[%.*s] Output len = %d\n[%s] reference\n", na, buffa, na, ref);
@@ -90,12 +89,12 @@ int main(void)
 	int i;
 	char buf[4096];
 
-	puts("Phase one.");
+	puts("\033[0;43m*** Phase one.\033[0m");
 	for (i=0;i<sizeof(tv)/sizeof(*tv);i++)
 	{
 		test(tv[i].in, tv[i].out, strlen(tv[i].in));
 	}
-	puts("Phase two.");
+	puts("\033[0;43m*** Phase two.\033[0m");
 	for (i=0;i<sizeof(tv2)/sizeof(*tv2);i++)
 	{
 		bzero(buf, sizeof(buf));
@@ -103,10 +102,11 @@ int main(void)
 		printf("[%s] --> [%s] exp. [%s] diff %d [%s]\n",tv2[i].in, buf, tv2[i].out, strncmp(buf, tv2[i].out,
 					strlen(tv2[i].out)),strncmp(buf, tv2[i].out, strlen(tv2[i].out))?REPORT_NOK:REPORT_OK);
 	}
+#if 0
 #define FILENAME_IN "data.in"
 #define FILENAME_OUT "data.out"	
 
-	puts("Phase three.");
+	puts("\033[0;43m*** Phase three.\033[0m");
 	for (i=0;i<sizeof(tv2)/sizeof(*tv2);i++)
 	{
 		int fd_in;
@@ -117,13 +117,32 @@ int main(void)
 		int w = write(fd_in, tv2[i].in, strlen(tv2[i].in));
 		lseek(fd_in, 0, SEEK_SET);
 		lseek(fd_out, 0, SEEK_SET);
-		int n = stream_enc(fd_in, cb);
+		int n = stream_enc(fd_in, fileio_cb);
+		lseek(fd_out, 0, SEEK_SET);
 		int res = compare_files(fd_out, tv2[i].out);
-		close(fd_in);
 		close(fd_out);
+		close(fd_in);
 		printf("end of test %d. Total input %d bytes. Test len = %d Result %d %s\n", i, n, w, res, res?REPORT_NOK:REPORT_OK);
 		unlink(FILENAME_IN);
 		unlink(FILENAME_OUT);
+	}
+#endif
+	puts("\033[0;43m*** Phase four.\033[0m");
+	for (i=0;i<sizeof(tv2)/sizeof(*tv2);i++)
+	{
+		int fd1[2]; pipe(fd1);
+		int fd2[2]; pipe(fd2);
+		fd_out = fd2[1];
+		int w = write(fd1[1], tv2[i].in, strlen(tv2[i].in));
+		close(fd1[1]);
+		printf("Start test %d, test len = %d\n", i, w);
+		int n = stream_enc(fd1[0], fileio_cb);
+		close(fd2[1]);
+		int res = compare_files(fd2[0], tv2[i].out);
+		close(fd1[0]);
+		close(fd2[0]);
+		close(fd_out);
+		printf("end of test %d. Total input %d bytes. Test len = %d Result %d %s\n", i, n, w, res, res?REPORT_NOK:REPORT_OK);
 	}
 	return 0;
 }
