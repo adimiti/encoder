@@ -10,7 +10,7 @@ $(PRJ): $(OBJ)
 main.o: encode.h
 
 %.o: %.c
-	gcc -c $< -O0 -g
+	gcc -c $< -Wall -O0 -g -pedantic
 
 
 .PHONY: clean
