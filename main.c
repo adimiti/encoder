@@ -1,3 +1,7 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <strings.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +34,13 @@ int test(const char a[3], const char b[4], int n)
 	return res;
 }
 
- 
+int cb(char c[4] , bool done)
+{
+	if (c) fprintf(stderr, "%4.4s", c);
+	if (done) printf(" done\n");
+	return 0;
+}
+
 int main(void)
 {
 	static const struct
@@ -60,10 +70,12 @@ int main(void)
 	int i;
 	char buf[4096];
 
+	puts("Phase one.");
 	for (i=0;i<sizeof(tv)/sizeof(*tv);i++)
 	{
 		test(tv[i].in, tv[i].out, strlen(tv[i].in));
 	}
+	puts("Phase two.");
 	for (i=0;i<sizeof(tv2)/sizeof(*tv2);i++)
 	{
 		bzero(buf, sizeof(buf));
@@ -72,6 +84,18 @@ int main(void)
 					strlen(tv2[i].out)),strncmp(buf, tv2[i].out, strlen(tv2[i].out))?REPORT_NOK:REPORT_OK);
 	}
 
-
+	puts("Phase three.");
+	for (i=0;i<sizeof(tv2)/sizeof(*tv2);i++)
+	{
+		int fd;
+		fd = open("data.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+		int w = write(fd, tv2[i].in, strlen(tv2[i].in));
+		lseek(fd, 0, SEEK_SET);
+		int n = stream_enc(fd, cb);
+		ftruncate(fd, 0);
+		close(fd);
+		printf("%s (Expected)\n", tv2[i].out);
+		printf("end of test %d. Total input %d bytes. Test len = %d\n", i, n, w);
+	}
 	return 0;
 }

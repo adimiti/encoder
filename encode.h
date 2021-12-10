@@ -1,5 +1,7 @@
 #ifndef ENCODE_H
 #define ENCODE_H (1)
+#include <stdint.h>
+#include <stdbool.h>
 /** 
  * @brief Coverts 24 bit integer in 4 butes base 64
  *
@@ -25,5 +27,8 @@ void into64(int32_t x, char buf[4], int n);
  * @dest	pointer to buffer where the reult will be stored with proper size, dest_size = ((src_len+2)/3)<<2;
  */
 void encode(char *dest, const char *src, int src_len);
+
+int stream_enc(int fd, int (*cb)(char c[4], bool done));
+
 #endif /* ENCODE_H */
 

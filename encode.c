@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -65,6 +66,28 @@ void encode(char *dest, const char *src, int src_len)
 	}
 }
 
+int stream_enc(int fd, int (*cb)(char c[4], bool done))
+{
+	int total = 0;
+	int n;
+	char i_buff[3];
+	char o_buff[4];
+	uint32_t data;
+
+	do {
+		n = read(fd, i_buff, 3);
+		total += n;
+		if (n)
+		{
+			data  = i_buff[0] * (n > 0); data <<= 8;
+			data |= i_buff[1] * (n > 1); data <<= 8;
+			data |= i_buff[2] * (n > 2);
+			into64(data, o_buff, n);
+		}
+		if (cb) cb(n?o_buff:NULL, n != 3);
+	} while (n == 3);
+	return total;
+}
 /** Bonus function that checks if the char is a valid b64 symbol
  * @in character 
  * @return true iff in is a valid base 64 symbol
