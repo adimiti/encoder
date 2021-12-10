@@ -7,6 +7,8 @@
 
 #include "encode.h"
  
+#define REPORT_NOK	"\033[0;41mNok\033[0m"
+#define REPORT_OK	"\033[0;42mOk\033[0m"
 
 int test(const char a[3], const char b[4], int n)
 {
@@ -23,7 +25,7 @@ int test(const char a[3], const char b[4], int n)
 	x |= a[2];
 	into64(x, buf, n);
 	res = strncmp(buf, b, 4);
-	printf("[%3.3s] --> [%4.4s], expected [%s], diff %d [%s]\n", a, buf, b, res, (res?"NOK":"OK"));
+	printf("[%3.3s] --> [%4.4s], expected [%s], diff %d [%s]\n", a, buf, b, res, (res?REPORT_NOK:REPORT_OK));
 
 	return res;
 }
@@ -67,7 +69,7 @@ int main(void)
 		bzero(buf, sizeof(buf));
 		encode(buf, tv2[i].in, strlen(tv2[i].in));
 		printf("[%s] --> [%s] exp. [%s] diff %d [%s]\n",tv2[i].in, buf, tv2[i].out, strncmp(buf, tv2[i].out,
-					strlen(tv2[i].out)),strncmp(buf, tv2[i].out, strlen(tv2[i].out))?"NOK":"OK");
+					strlen(tv2[i].out)),strncmp(buf, tv2[i].out, strlen(tv2[i].out))?REPORT_NOK:REPORT_OK);
 	}
 
 
